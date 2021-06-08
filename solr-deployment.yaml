@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: solr
+  labels:
+    app: solr
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: solr
+    tier: frontend
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: solr-pv-claim
+  labels:
+    app: solr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solr
+  labels:
+    app: solr
+spec:
+  selector:
+    matchLabels:
+      app: solr
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: solr
+        tier: frontend
+    spec:
+      containers:
+      - image: solr:3-alpine
+        name: solr
+        env:
+        - name: SOLR_DB_HOST
+          value: solr-mysql
+        - name: SOLR_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 80
+          name: solr
+        volumeMounts:
+        - name: solr-persistent-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: solr-persistent-storage
+        persistentVolumeClaim:
+          claimName: solr-pv-claim
