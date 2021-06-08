@@ -45,7 +45,7 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: solr:3-alpine
+      - image: solr:8.8.2
         name: solr
         env:
         - name: SOLR_DB_HOST
